@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B-Mail Official</title>
     
-    <!-- טעינת הספריות - הוספתי "defer" כדי להכריח אותן להיטען -->
-    <script defer src="https://gstatic.com"></script>
-    <script defer src="https://gstatic.com"></script>
+    <!-- שימוש בכתובות עוקפות חסימה של Cloudflare -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
 
     <style>
-        body { font-family: sans-serif; background: #6a11cb; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
+        body { font-family: sans-serif; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
         .card { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
@@ -28,7 +28,7 @@
     <div id="auth-ui">
         <input type="text" id="u" placeholder="שם משתמש">
         <div id="pass-area" class="hidden">
-            <input type="password" id="p" placeholder="הכנס סיסמה">
+            <input type="password" id="pass" placeholder="הכנס סיסמה">
         </div>
         <button id="btn-main" onclick="handleAuth()">המשך</button>
         <button class="link" id="toggle-link" onclick="toggleMode()">צור חשבון חדש</button>
@@ -36,14 +36,15 @@
 
     <div id="mail-ui" class="hidden">
         <h3 id="hello"></h3>
-        <div id="inbox">טוען הודעות...</div>
+        <div id="inbox">אין הודעות חדשות</div>
+        <hr>
         <input type="text" id="to" placeholder="אל (שם המשתמש)">
         <input type="text" id="msg" placeholder="הודעה...">
         <button onclick="doSend()" style="background:#28a745">שלח מסר</button>
         <button class="link" onclick="location.reload()">התנתק</button>
     </div>
     
-    <div id="status">מנסה להתחבר לשרת...</div>
+    <div id="status">מתחבר ל-Bino Cloud...</div>
 </div>
 
 <script>
@@ -51,26 +52,28 @@
     var myName = "";
     var isRegister = false;
 
-    // לוגיקת האתחול - בודקת כל חצי שנייה אם Firebase נטען
-    var checkFirebase = setInterval(function() {
-        if (typeof firebase !== 'undefined') {
-            clearInterval(checkFirebase);
-            initApp();
-        }
-    }, 500);
-
-    function initApp() {
+    // פונקציית אתחול שרצה כשהכל נטען
+    function init() {
         const config = {
             apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
             authDomain: "://firebaseapp.com",
             projectId: "bmail-f3665",
             databaseURL: "https://firebaseio.com"
         };
-        firebase.initializeApp(config);
-        db = firebase.database();
-        document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
-        document.getElementById('status').style.color = "green";
+
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(config);
+            db = firebase.database();
+            document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
+            document.getElementById('status').style.color = "green";
+        } else {
+            document.getElementById('status').innerText = "❌ שגיאה: Firebase לא נטען. נסה לרענן.";
+            document.getElementById('status').style.color = "red";
+        }
     }
+
+    // הפעלה
+    window.onload = init;
 
     function toggleMode() {
         isRegister = !isRegister;
@@ -81,10 +84,10 @@
     }
 
     function handleAuth() {
-        if (!db) return alert("המערכת עדיין מתחברת לשרת, חכה לשנייה...");
+        if (!db) return alert("המערכת בטעינה...");
         
         var u = document.getElementById('u').value.trim();
-        var p = document.getElementById('p').value;
+        var p = document.getElementById('pass').value;
         if (!u) return alert("נא להזין שם");
 
         if (isRegister) {
@@ -138,7 +141,7 @@
         
         db.ref('messages').push({ from: myName, to: t, text: m })
             .then(function() { 
-                alert("הודעה נשלחה!"); 
+                alert("הודעה נשלחה אל " + t + "@bino"); 
                 document.getElementById('msg').value = ""; 
             });
     }
