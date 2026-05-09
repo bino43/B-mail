@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Mail Final Fix</title>
+    <!-- שימוש בגרסאות הכי יציבות של Firebase -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
+    <style>
+        body { font-family: sans-serif; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
+        .card { background: white; padding: 30px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
+        button:active { transform: scale(0.98); }
+        .hidden { display: none !important; }
+        .link { color: #9b59b6; cursor: pointer; text-decoration: underline; display: block; margin-top: 15px; }
+        #inbox { border: 1px solid #eee; height: 120px; overflow-y: auto; margin: 10px 0; padding: 5px; background: #f9f9f9; text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1 id="title">B-Mail</h1>
+    
+    <div id="auth-section">
+        <input type="text" id="user" placeholder="שם משתמש">
+        <div id="pass-area" class="hidden">
+            <input type="password" id="pass" placeholder="סיסמה">
+        </div>
+        <!-- הוספתי type="button" כדי למנוע מהדף להתרענן בטעות -->
+        <button type="button" onclick="handleMainAction()" id="main-btn">המשך</button>
+        <div class="link" onclick="toggleMode()" id="toggle-text">צור חשבון חדש</div>
+    </div>
+
+    <div id="mail-section" class="hidden">
+        <h3 id="welcome-msg"></h3>
+        <div id="inbox">אין הודעות</div>
+        <input type="text" id="to" placeholder="אל (שם משתמש)">
+        <input type="text" id="msg" placeholder="הודעה...">
+        <button type="button" onclick="sendMail()" style="background:#28a745">שלח</button>
+        <div class="link" onclick="location.reload()">התנתק</div>
+    </div>
+</div>
+
+<script>
+    var firebaseConfig = {
+        apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
+        authDomain: "://firebaseapp.com",
+        projectId: "bmail-f3665",
+        storageBucket: "bmail-f3665.firebasestorage.app",
+        messagingSenderId: "575743100042",
+        appId: "1:575743100042:web:976471d23bb08bc3315973",
+        databaseURL: "https://firebaseio.com"
+    };
+
+    var db;
+    var isRegister = false;
+    var myName = "";
+
+    // אתחול מיידי
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.database();
+        console.log("Firebase Connected!");
+    } catch (e) {
+        console.error("Firebase Error:", e);
+    }
+
+    function toggleMode() {
+        isRegister = !isRegister;
+        document.getElementById('title').innerText = isRegister ? "הרשמה" : "B-Mail";
+        document.getElementById('pass-area').classList.toggle('hidden', !isRegister);
+        document.getElementById('main-btn').innerText = isRegister ? "צור חשבון" : "המשך";
+        document.getElementById('toggle-text').innerText = isRegister ? "יש לי חשבון" : "צור חשבון חדש";
+    }
+
+    function handleMainAction() {
+        var u = document.getElementById('user').value.trim();
+        var p = document.getElementById('pass').value;
+
+        if (!u) { alert("נא להזין שם משתמש"); return; }
+
+        if (isRegister) {
+            if (!p) { alert("נא לבחור סיסמה"); return; }
+            console.log("נסה לרשום משתמש:", u);
+            db.ref('users/' + u).set({ password: p })
+                .then(function() {
+                    alert("חשבון " + u + "@bino נוצר! תעבור למסך כניסה");
+                    location.reload();
+                })
+                .catch(function(err) {
+                    alert("שגיאת שרת: " + err.message);
+                });
+        } else {
+            console.log("נסה להיכנס כמשתמש:", u);
+            db.ref('users/' + u).once('value').then(function(s) {
+                var data = s.val();
+                if (!data) { 
+                    alert("משתמש " + u + "@bino לא קיים"); 
+                    return; 
+                }
+                
+                // אם המשתמש קיים ושדה הסיסמה מוסתר - נציג אותו
+                if (document.getElementById('pass-area').classList.contains('hidden')) {
+                    document.getElementById('pass-area').classList.remove('hidden');
+                    alert("משתמש זוהה, הכנס סיסמה");
+                    return;
+                }
+
+                if (p === data.password) {
+                    myName = u;
+                    goToMail();
+                } else {
+                    alert("סיסמה שגויה");
+                }
+            }).catch(function(err) {
+                alert("שגיאת תקשורת: " + err.message);
+            });
+        }
+    }
+
+    function goToMail() {
+        document.getElementById('auth-section').classList.add('hidden');
+        document.getElementById('mail-section').classList.remove('hidden');
+        document.getElementById('welcome-msg').innerText = "שלום, " + myName + "@bino";
+        
+        db.ref('messages').on('value', function(s) {
+            var msgs = s.val();
+            var h = "";
+            for (var id in msgs) {
+                if (msgs[id] && msgs[id].to === myName) {
+                    h += "<div><b>" + msgs[id].from + ":</b> " + msgs[id].text + "</div>";
+                }
+            }
+            document.getElementById('inbox').innerHTML = h || "אין הודעות חדשות";
+        });
+    }
+
+    function sendMail() {
+        var t = document.getElementById('to').value.trim();
+        var m = document.getElementById('msg').value;
+        if (!t || !m) { alert("מלא את כל השדות"); return; }
+        
+        db.ref('messages').push({ from: myName, to: t, text: m })
+            .then(function() {
+                alert("הודעה נשלחה!");
+                document.getElementById('msg').value = "";
+            })
+            .catch(function(err) {
+                alert("שגיאה בשליחה: " + err.message);
+            });
+    }
+</script>
+</body>
+</html>
