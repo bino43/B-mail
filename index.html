@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Mail | Official</title>
+    <title>B-Mail Official</title>
     
-    <!-- טעינת Firebase בשיטה הכי אמינה שיש -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <!-- טעינת Firebase בגרסה הכי יציבה דרך Cloudflare -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
 
     <style>
         body { font-family: sans-serif; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
@@ -15,8 +15,8 @@
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .hidden { display: none !important; }
-        .link { color: #9b59b6; cursor: pointer; text-decoration: underline; display: block; margin-top: 15px; font-size: 14px; }
-        #status { font-size: 11px; color: gray; margin-top: 15px; }
+        .link { color: #9b59b6; cursor: pointer; text-decoration: underline; display: block; margin-top: 15px; font-size: 14px; border:none; background:none; width:100%; }
+        #status { font-size: 11px; color: gray; margin-top: 15px; background: #eee; padding: 5px; border-radius: 5px; }
         #inbox { height: 120px; border: 1px solid #eee; overflow-y: auto; margin: 10px 0; background: #f9f9f9; padding: 5px; text-align: right; font-size: 14px; }
     </style>
 </head>
@@ -28,10 +28,10 @@
     <div id="auth-ui">
         <input type="text" id="u" placeholder="שם משתמש">
         <div id="pass-area" class="hidden">
-            <input type="password" id="pass" placeholder="הכנס סיסמה">
+            <input type="password" id="p" placeholder="הכנס סיסמה">
         </div>
         <button id="btn-main" onclick="handleAuth()">המשך</button>
-        <div class="link" id="toggle-link" onclick="toggleMode()">צור חשבון חדש</div>
+        <button class="link" id="toggle-link" onclick="toggleMode()">צור חשבון חדש</button>
     </div>
 
     <div id="mail-ui" class="hidden">
@@ -40,38 +40,46 @@
         <input type="text" id="to" placeholder="אל (שם המשתמש)">
         <input type="text" id="msg" placeholder="הודעה...">
         <button onclick="doSend()" style="background:#28a745">שלח מסר</button>
-        <div class="link" onclick="location.reload()">התנתק</div>
+        <button class="link" onclick="location.reload()">התנתק</button>
     </div>
     
-    <div id="status">מתחבר ל-Bino Cloud...</div>
+    <div id="status">בודק חיבור לשרת...</div>
 </div>
 
 <script>
-    // הגדרות ה-Firebase שלך
-    var firebaseConfig = {
-        apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
-        authDomain: "://firebaseapp.com",
-        projectId: "bmail-f3665",
-        storageBucket: "bmail-f3665.firebasestorage.app",
-        messagingSenderId: "575743100042",
-        appId: "1:575743100042:web:976471d23bb08bc3315973",
-        databaseURL: "https://firebaseio.com"
-    };
-
     var db;
     var myName = "";
     var isRegister = false;
 
-    // הפעלה
-    try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-        document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
-        document.getElementById('status').style.color = "green";
-    } catch (e) {
-        document.getElementById('status').innerText = "❌ שגיאת חיבור: " + e.message;
-        document.getElementById('status').style.color = "red";
+    // הפונקציה הזו תרוץ רק כשכל הסקריפטים נטענו
+    function startFirebase() {
+        const config = {
+            apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
+            authDomain: "://firebaseapp.com",
+            projectId: "bmail-f3665",
+            storageBucket: "bmail-f3665.firebasestorage.app",
+            messagingSenderId: "575743100042",
+            appId: "1:575743100042:web:976471d23bb08bc3315973",
+            databaseURL: "https://firebaseio.com"
+        };
+
+        try {
+            if (typeof firebase !== 'undefined') {
+                firebase.initializeApp(config);
+                db = firebase.database();
+                document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
+                document.getElementById('status').style.color = "green";
+            } else {
+                document.getElementById('status').innerText = "❌ שגיאה: Firebase לא נטען מהענן";
+                document.getElementById('status').style.color = "red";
+            }
+        } catch (e) {
+            document.getElementById('status').innerText = "❌ שגיאה פנימית: " + e.message;
+        }
     }
+
+    // מחכה שהדף יסיים להיטען
+    window.onload = startFirebase;
 
     function toggleMode() {
         isRegister = !isRegister;
@@ -82,14 +90,16 @@
     }
 
     function handleAuth() {
+        if (!db) return alert("המערכת עדיין בטעינה, נסה שוב בעוד רגע");
+        
         var u = document.getElementById('u').value.trim();
-        var p = document.getElementById('pass').value;
+        var p = document.getElementById('p').value;
         if (!u) return alert("נא להזין שם");
 
         if (isRegister) {
             if (!p) return alert("נא להזין סיסמה");
             db.ref('users/' + u).set({ password: p }).then(function() {
-                alert("חשבון נוצר! תעבור למסך כניסה");
+                alert("חשבון " + u + "@bino נוצר בהצלחה!");
                 location.reload();
             });
         } else {
@@ -110,7 +120,7 @@
                     alert("סיסמה שגויה");
                 }
             }).catch(function(err) {
-                alert("שגיאה בגישה לשרת: " + err.message);
+                alert("שגיאה: " + err.message);
             });
         }
     }
