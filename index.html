@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Mail | Ultra Stable</title>
+    <title>B-Mail Official</title>
     
-    <!-- טעינת Firebase בשיטה הכי בטוחה שיש - גרסת ה-App וה-Database -->
+    <!-- טעינת Firebase דרך שרת חלופי (CDN) -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 
@@ -18,7 +18,6 @@
         .link { color: #9b59b6; cursor: pointer; text-decoration: underline; display: block; margin-top: 15px; font-size: 14px; background: none; border: none; width: 100%; }
         #status { font-size: 11px; color: #555; margin-top: 15px; padding: 5px; background: #eee; border-radius: 5px; }
         #inbox { height: 120px; border: 1px solid #eee; overflow-y: auto; margin: 10px 0; background: #f9f9f9; padding: 5px; text-align: right; }
-        .msg { padding: 5px; border-bottom: 1px solid #ddd; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -29,7 +28,7 @@
     <div id="auth-ui">
         <input type="text" id="u" placeholder="שם משתמש">
         <div id="pass-area" class="hidden">
-            <input type="password" id="pass" placeholder="הכנס סיסמה">
+            <input type="password" id="p" placeholder="הכנס סיסמה">
         </div>
         <button id="btn-main" onclick="handleAuth()">המשך</button>
         <button class="link" id="toggle-link" onclick="toggleMode()">צור חשבון חדש</button>
@@ -45,7 +44,7 @@
         <button class="link" onclick="location.reload()">התנתק</button>
     </div>
     
-    <div id="status">בודק חיבור...</div>
+    <div id="status">מנסה להתחבר לשרת...</div>
 </div>
 
 <script>
@@ -53,32 +52,32 @@
     var myName = "";
     var isRegister = false;
 
-    // הגדרות Firebase
+    // הגדרות ה-Firebase שלך
     const config = {
         apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
         authDomain: "://firebaseapp.com",
         projectId: "bmail-f3665",
-        storageBucket: "bmail-f3665.firebasestorage.app",
-        messagingSenderId: "575743100042",
-        appId: "1:575743100042:web:976471d23bb08bc3315973",
         databaseURL: "https://firebaseio.com"
     };
 
-    // פונקציית אתחול עם "בדיקת דופק"
-    function startApp() {
-        if (typeof firebase !== 'undefined') {
+    // פונקציית בדיקה שרצה כל חצי שנייה עד ש-Firebase נטען
+    var checkInterval = setInterval(function() {
+        if (window.firebase) {
+            clearInterval(checkInterval);
+            initFirebase();
+        }
+    }, 500);
+
+    function initFirebase() {
+        try {
             firebase.initializeApp(config);
             db = firebase.database();
             document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
             document.getElementById('status').style.color = "green";
-        } else {
-            document.getElementById('status').innerText = "❌ Firebase לא נטען. נסה לרענן.";
-            document.getElementById('status').style.color = "red";
+        } catch (e) {
+            document.getElementById('status').innerText = "❌ שגיאת חיבור: " + e.message;
         }
     }
-
-    // הפעלה כשהדף מוכן
-    window.onload = startApp;
 
     function toggleMode() {
         isRegister = !isRegister;
@@ -89,16 +88,16 @@
     }
 
     function handleAuth() {
-        if (!db) return alert("המערכת בטעינה, המתן...");
+        if (!db) return alert("המערכת עדיין בטעינה, אנא המתן...");
         
         var u = document.getElementById('u').value.trim();
-        var p = document.getElementById('pass').value;
+        var p = document.getElementById('p').value;
         if (!u) return alert("נא להזין שם");
 
         if (isRegister) {
             if (!p) return alert("נא להזין סיסמה");
             db.ref('users/' + u).set({ password: p }).then(function() {
-                alert("חשבון " + u + "@bino נוצר! עכשיו תתחבר");
+                alert("חשבון נוצר! עכשיו תתחבר");
                 location.reload();
             });
         } else {
@@ -132,7 +131,7 @@
             var html = "";
             for (var i in msgs) {
                 if (msgs[i] && msgs[i].to === myName) {
-                    html += "<div class='msg'><b>מאת " + msgs[i].from + ":</b> " + msgs[i].text + "</div>";
+                    html += "<div style='padding:5px; border-bottom:1px solid #ddd;'><b>מאת " + msgs[i].from + ":</b> " + msgs[i].text + "</div>";
                 }
             }
             document.getElementById('inbox').innerHTML = html || "אין הודעות חדשות";
@@ -146,7 +145,7 @@
         
         db.ref('messages').push({ from: myName, to: t, text: m })
             .then(function() { 
-                alert("הודעה נשלחה אל " + t + "@bino"); 
+                alert("הודעה נשלחה!"); 
                 document.getElementById('msg').value = ""; 
             });
     }
