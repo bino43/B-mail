@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Mail Official</title>
+    <title>B-Mail | Ultra Stable</title>
     
-    <!-- שימוש בכתובות עוקפות חסימה של Cloudflare -->
-    <script src="https://cloudflare.com"></script>
-    <script src="https://cloudflare.com"></script>
+    <!-- טעינת Firebase בשיטה הכי בטוחה שיש - גרסת ה-App וה-Database -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 
     <style>
-        body { font-family: sans-serif; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
+        body { font-family: sans-serif; background: #6a11cb; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
         .card { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         button { width: 100%; padding: 12px; background: #9b59b6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 16px; }
@@ -18,6 +18,7 @@
         .link { color: #9b59b6; cursor: pointer; text-decoration: underline; display: block; margin-top: 15px; font-size: 14px; background: none; border: none; width: 100%; }
         #status { font-size: 11px; color: #555; margin-top: 15px; padding: 5px; background: #eee; border-radius: 5px; }
         #inbox { height: 120px; border: 1px solid #eee; overflow-y: auto; margin: 10px 0; background: #f9f9f9; padding: 5px; text-align: right; }
+        .msg { padding: 5px; border-bottom: 1px solid #ddd; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -44,7 +45,7 @@
         <button class="link" onclick="location.reload()">התנתק</button>
     </div>
     
-    <div id="status">מתחבר ל-Bino Cloud...</div>
+    <div id="status">בודק חיבור...</div>
 </div>
 
 <script>
@@ -52,28 +53,32 @@
     var myName = "";
     var isRegister = false;
 
-    // פונקציית אתחול שרצה כשהכל נטען
-    function init() {
-        const config = {
-            apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
-            authDomain: "://firebaseapp.com",
-            projectId: "bmail-f3665",
-            databaseURL: "https://firebaseio.com"
-        };
+    // הגדרות Firebase
+    const config = {
+        apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
+        authDomain: "://firebaseapp.com",
+        projectId: "bmail-f3665",
+        storageBucket: "bmail-f3665.firebasestorage.app",
+        messagingSenderId: "575743100042",
+        appId: "1:575743100042:web:976471d23bb08bc3315973",
+        databaseURL: "https://firebaseio.com"
+    };
 
+    // פונקציית אתחול עם "בדיקת דופק"
+    function startApp() {
         if (typeof firebase !== 'undefined') {
             firebase.initializeApp(config);
             db = firebase.database();
             document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
             document.getElementById('status').style.color = "green";
         } else {
-            document.getElementById('status').innerText = "❌ שגיאה: Firebase לא נטען. נסה לרענן.";
+            document.getElementById('status').innerText = "❌ Firebase לא נטען. נסה לרענן.";
             document.getElementById('status').style.color = "red";
         }
     }
 
-    // הפעלה
-    window.onload = init;
+    // הפעלה כשהדף מוכן
+    window.onload = startApp;
 
     function toggleMode() {
         isRegister = !isRegister;
@@ -84,7 +89,7 @@
     }
 
     function handleAuth() {
-        if (!db) return alert("המערכת בטעינה...");
+        if (!db) return alert("המערכת בטעינה, המתן...");
         
         var u = document.getElementById('u').value.trim();
         var p = document.getElementById('pass').value;
@@ -127,7 +132,7 @@
             var html = "";
             for (var i in msgs) {
                 if (msgs[i] && msgs[i].to === myName) {
-                    html += "<div style='padding:5px; border-bottom:1px solid #ddd;'><b>מאת " + msgs[i].from + ":</b> " + msgs[i].text + "</div>";
+                    html += "<div class='msg'><b>מאת " + msgs[i].from + ":</b> " + msgs[i].text + "</div>";
                 }
             }
             document.getElementById('inbox').innerHTML = html || "אין הודעות חדשות";
