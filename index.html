@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Mail Official</title>
+    <title>B-Mail | Official</title>
+    
+    <!-- טעינת Firebase בשיטה הכי אמינה שיש -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
+
     <style>
         body { font-family: sans-serif; background: linear-gradient(135deg, #6a11cb, #2575fc); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
         .card { background: white; padding: 30px; border-radius: 15px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
@@ -22,46 +25,53 @@
 <div class="card">
     <h1 id="main-title">B-Mail</h1>
     
-    <!-- מסך כניסה והרשמה -->
     <div id="auth-ui">
-        <input type="text" id="u" placeholder="שם משתמש (למשל bino)">
+        <input type="text" id="u" placeholder="שם משתמש">
         <div id="pass-area" class="hidden">
-            <input type="password" id="p" placeholder="הכנס סיסמה">
+            <input type="password" id="pass" placeholder="הכנס סיסמה">
         </div>
         <button id="btn-main" onclick="handleAuth()">המשך</button>
         <div class="link" id="toggle-link" onclick="toggleMode()">צור חשבון חדש</div>
     </div>
 
-    <!-- מסך תיבת המייל -->
     <div id="mail-ui" class="hidden">
         <h3 id="hello"></h3>
         <div id="inbox">טוען הודעות...</div>
-        <hr>
-        <input type="text" id="to" placeholder="אל (שם המשתמש בלבד)">
+        <input type="text" id="to" placeholder="אל (שם המשתמש)">
         <input type="text" id="msg" placeholder="הודעה...">
         <button onclick="doSend()" style="background:#28a745">שלח מסר</button>
         <div class="link" onclick="location.reload()">התנתק</div>
     </div>
     
-    <div id="status">טוען מערכת...</div>
+    <div id="status">מתחבר ל-Bino Cloud...</div>
 </div>
 
 <script>
+    // הגדרות ה-Firebase שלך
+    var firebaseConfig = {
+        apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
+        authDomain: "://firebaseapp.com",
+        projectId: "bmail-f3665",
+        storageBucket: "bmail-f3665.firebasestorage.app",
+        messagingSenderId: "575743100042",
+        appId: "1:575743100042:web:976471d23bb08bc3315973",
+        databaseURL: "https://firebaseio.com"
+    };
+
     var db;
     var myName = "";
     var isRegister = false;
 
-    window.onload = function() {
-        const config = {
-            apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
-            authDomain: "://firebaseapp.com",
-            projectId: "bmail-f3665",
-            databaseURL: "https://firebaseio.com"
-        };
-        firebase.initializeApp(config);
+    // הפעלה
+    try {
+        firebase.initializeApp(firebaseConfig);
         db = firebase.database();
         document.getElementById('status').innerText = "✅ מחובר לשרת Bino";
-    };
+        document.getElementById('status').style.color = "green";
+    } catch (e) {
+        document.getElementById('status').innerText = "❌ שגיאת חיבור: " + e.message;
+        document.getElementById('status').style.color = "red";
+    }
 
     function toggleMode() {
         isRegister = !isRegister;
@@ -73,37 +83,34 @@
 
     function handleAuth() {
         var u = document.getElementById('u').value.trim();
-        var p = document.getElementById('p').value;
+        var p = document.getElementById('pass').value;
         if (!u) return alert("נא להזין שם");
 
-        // אם אנחנו בהרשמה - יוצרים חשבון עם סיסמה
         if (isRegister) {
-            if (!p) return alert("נא להזין סיסמה לחשבון החדש");
+            if (!p) return alert("נא להזין סיסמה");
             db.ref('users/' + u).set({ password: p }).then(function() {
-                alert("חשבון " + u + "@bino נוצר! עכשיו תתחבר");
+                alert("חשבון נוצר! תעבור למסך כניסה");
                 location.reload();
             });
-        } 
-        // אם אנחנו בהתחברות
-        else {
+        } else {
             db.ref('users/' + u).once('value').then(function(s) {
                 var data = s.val();
                 if (!data) return alert("לא זוהה מייל במערכת");
 
-                // אם המייל קיים אבל הסיסמה עוד מוסתרת - מראים אותה
                 if (document.getElementById('pass-area').classList.contains('hidden')) {
                     document.getElementById('pass-area').classList.remove('hidden');
                     alert("משתמש זוהה! עכשיו הזן סיסמה");
                     return;
                 }
 
-                // אם כבר הזנת סיסמה - בודקים אותה
                 if (p === data.password) {
                     myName = u;
                     showMail();
                 } else {
                     alert("סיסמה שגויה");
                 }
+            }).catch(function(err) {
+                alert("שגיאה בגישה לשרת: " + err.message);
             });
         }
     }
@@ -117,7 +124,7 @@
             var msgs = s.val();
             var html = "";
             for (var i in msgs) {
-                if (msgs[i].to === myName) {
+                if (msgs[i] && msgs[i].to === myName) {
                     html += "<div><b>מאת " + msgs[i].from + ":</b> " + msgs[i].text + "</div>";
                 }
             }
@@ -130,10 +137,9 @@
         var m = document.getElementById('msg').value;
         if (!t || !m) return alert("מלא נמען והודעה");
         
-        // שליחה - לא צריך סיסמה של הנמען, רק את השם שלו
         db.ref('messages').push({ from: myName, to: t, text: m })
             .then(function() { 
-                alert("הודעה נשלחה אל " + t + "@bino"); 
+                alert("הודעה נשלחה!"); 
                 document.getElementById('msg').value = ""; 
             });
     }
