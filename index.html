@@ -3,180 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B-Mail | Ultra System</title>
+    <title>B-Mail | Official System</title>
     
-    <!-- ניסיון טעינה מ-3 מקורות שונים במקביל כדי לוודא שזה עובד -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
+    <!-- טעינת Firebase בשיטה שעוקפת חסימות GitHub -->
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; color: #333; }
-        .card { background: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 25px; width: 350px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
-        h1 { font-size: 35px; margin-bottom: 20px; background: linear-gradient(to right, #1a2a6c, #b21f1f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        input, textarea { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
-        input:focus { border-color: #b21f1f; box-shadow: 0 0 10px rgba(178, 31, 31, 0.2); }
-        button { width: 100%; padding: 15px; background: linear-gradient(to right, #1a2a6c, #b21f1f); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 15px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-        button:active { transform: translateY(0); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
+        .card { background: white; padding: 40px; border-radius: 20px; width: 350px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        h1 { color: #1e3c72; margin-bottom: 25px; font-size: 32px; letter-spacing: 2px; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: #2a5298; box-shadow: 0 0 5px rgba(42, 82, 152, 0.5); }
+        button { width: 100%; padding: 12px; background: #1e3c72; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 10px; transition: 0.3s; }
+        button:hover { background: #2a5298; transform: scale(1.02); }
         .hidden { display: none !important; }
-        .toggle-link { color: #1a2a6c; cursor: pointer; text-decoration: underline; display: block; margin-top: 20px; font-size: 14px; font-weight: bold; }
-        #status-bar { font-size: 12px; color: #555; margin-top: 20px; padding: 8px; background: #eee; border-radius: 8px; font-family: monospace; }
-        #inbox { height: 150px; border: 1px solid #eee; overflow-y: auto; margin: 15px 0; background: #fff; border-radius: 12px; padding: 10px; text-align: right; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
-        .msg-item { background: #f8f9fa; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-right: 5px solid #1a2a6c; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        .link { color: #1e3c72; cursor: pointer; text-decoration: underline; display: block; margin-top: 20px; font-size: 14px; background: none; border: none; width: 100%; }
+        #status-bar { font-size: 11px; color: #777; margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; }
+        #inbox { height: 150px; border: 1px solid #eee; overflow-y: auto; margin: 15px 0; background: #fafafa; border-radius: 10px; padding: 10px; text-align: right; }
+        .msg-box { background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-right: 5px solid #1e3c72; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1 id="app-title">B-Mail</h1>
+    <h1 id="title-text">B-Mail</h1>
     
-    <!-- מסך הרשמה וכניסה -->
-    <div id="auth-box">
-        <input type="text" id="user-field" placeholder="שם משתמש (למשל: bino)">
-        <div id="password-container" class="hidden">
-            <input type="password" id="pass-field" placeholder="סיסמה">
+    <!-- מסך כניסה/הרשמה -->
+    <div id="auth-ui">
+        <input type="text" id="user-in" placeholder="שם משתמש (למשל: bino)">
+        <div id="pass-div" class="hidden">
+            <input type="password" id="pass-in" placeholder="סיסמה">
         </div>
-        <button id="main-action-btn" onclick="processEntry()">המשך</button>
-        <div class="toggle-link" id="switch-btn" onclick="changeMode()">צור חשבון חדש ב-Bino</div>
+        <button id="main-btn" onclick="handleLogic()">המשך</button>
+        <button class="link" id="toggle-btn" onclick="toggleMode()">צור חשבון חדש</button>
     </div>
 
-    <!-- מסך תיבת דואר -->
-    <div id="mailbox-box" class="hidden">
-        <h3 style="margin-top:0;">ברוך הבא, <span id="user-tag" style="color:#b21f1f"></span></h3>
+    <!-- מסך מיילים -->
+    <div id="mail-ui" class="hidden">
+        <h3 id="welcome-tag"></h3>
         <div id="inbox">טוען הודעות...</div>
         <hr style="border: 0; border-top: 1px solid #eee;">
-        <input type="text" id="send-to" placeholder="אל (שם המשתמש בלבד)">
-        <textarea id="send-msg" placeholder="הודעה חדשה..."></textarea>
-        <button onclick="deliverMail()" style="background: linear-gradient(to right, #11998e, #38ef7d);">שלח מסר</button>
-        <div class="toggle-link" onclick="location.reload()">התנתק מהמערכת</div>
+        <input type="text" id="to-user" placeholder="אל (שם המשתמש בלבד)">
+        <textarea id="msg-content" placeholder="ההודעה שלך..."></textarea>
+        <button onclick="sendBinoMail()" style="background: #27ae60;">שלח מסר</button>
+        <button class="link" onclick="location.reload()">התנתק</button>
     </div>
     
-    <div id="status-bar">מנסה להתחבר למסד הנתונים...</div>
+    <div id="status-bar">מתחבר למערכת...</div>
 </div>
 
 <script>
-    // הגדרות הפרויקט שלך ב-Firebase
-    var fbConfig = {
+    var database;
+    var myUser = "";
+    var isReg = false;
+
+    // הגדרות Firebase
+    var config = {
         apiKey: "AIzaSyANG1mVIHW12mer7KKWl2RpUI7Ld2spOyI",
         authDomain: "://firebaseapp.com",
         projectId: "bmail-f3665",
-        storageBucket: "bmail-f3665.firebasestorage.app",
-        messagingSenderId: "575743100042",
-        appId: "1:575743100042:web:976471d23bb08bc3315973",
         databaseURL: "https://firebaseio.com"
     };
 
-    var database;
-    var currentUsername = "";
-    var isSignUp = false;
-
-    // מנגנון "בדיקת דופק" לטעינת Firebase
-    function bootstrap() {
+    // לוגיקת טעינה חסינה
+    function startSystem() {
         if (typeof firebase !== 'undefined') {
             try {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(fbConfig);
-                }
+                if (!firebase.apps.length) firebase.initializeApp(config);
                 database = firebase.database();
-                document.getElementById('status-bar').innerText = "✅ מחובר לשרת Bino Cloud";
+                document.getElementById('status-bar').innerText = "✅ Bino Server Online";
                 document.getElementById('status-bar').style.color = "green";
-                console.log("System Online");
-            } catch (err) {
-                document.getElementById('status-bar').innerText = "❌ שגיאת מערכת: " + err.message;
+            } catch (e) {
+                document.getElementById('status-bar').innerText = "❌ שגיאת חיבור: " + e.message;
             }
         } else {
-            document.getElementById('status-bar').innerText = "⌛ ממתין לטעינת רכיבי גוגל...";
-            setTimeout(bootstrap, 1000); 
+            document.getElementById('status-bar').innerText = "⌛ ממתין לסינכרון ענן...";
+            setTimeout(startSystem, 1000);
         }
     }
 
-    bootstrap();
+    startSystem();
 
-    function changeMode() {
-        isSignUp = !isSignUp;
-        document.getElementById('app-title').innerText = isSignUp ? "הרשמה" : "B-Mail";
-        document.getElementById('password-container').classList.toggle('hidden', !isSignUp);
-        document.getElementById('main-action-btn').innerText = isSignUp ? "צור חשבון" : "המשך";
-        document.getElementById('switch-btn').innerText = isSignUp ? "יש לי כבר חשבון" : "צור חשבון חדש ב-Bino";
+    function toggleMode() {
+        isReg = !isReg;
+        document.getElementById('title-text').innerText = isReg ? "הרשמה" : "B-Mail";
+        document.getElementById('pass-div').classList.toggle('hidden', !isReg);
+        document.getElementById('main-btn').innerText = isReg ? "צור חשבון" : "המשך";
+        document.getElementById('toggle-btn').innerText = isReg ? "יש לי כבר חשבון" : "צור חשבון חדש";
     }
 
-    function processEntry() {
-        if (!database) return alert("המערכת עדיין מתחברת, המתן רגע...");
+    function handleLogic() {
+        if (!database) return alert("המערכת בטעינה, נסה שוב בעוד רגע");
         
-        var u = document.getElementById('user-field').value.trim().toLowerCase();
-        var p = document.getElementById('pass-field').value;
+        var name = document.getElementById('user-in').value.trim().toLowerCase();
+        var pass = document.getElementById('pass-in').value;
+        if (!name) return alert("נא להזין שם משתמש");
 
-        if (!u) return alert("נא להזין שם משתמש");
+        var ref = database.ref('users/' + name);
 
-        var userRef = database.ref('users/' + u);
-
-        if (isSignUp) {
-            if (!p) return alert("נא לבחור סיסמה");
-            userRef.once('value').then(function(snap) {
-                if (snap.val()) return alert("השם הזה כבר תפוס!");
-                userRef.set({ password: p }).then(function() {
-                    alert("חשבון " + u + "@bino נוצר בהצלחה! כעת תוכל להתחבר.");
-                    location.reload();
-                });
+        if (isReg) {
+            if (!pass) return alert("נא להזין סיסמה");
+            ref.set({ password: pass }).then(function() {
+                alert("חשבון " + name + "@bino נוצר! כעת התחבר.");
+                location.reload();
             });
         } else {
-            userRef.once('value').then(function(snap) {
-                var data = snap.val();
-                if (!data) return alert("לא נמצא משתמש בשם " + u);
+            ref.once('value').then(function(s) {
+                var data = s.val();
+                if (!data) return alert("לא זוהה מייל בשם " + name + "@bino");
 
-                if (document.getElementById('password-container').classList.contains('hidden')) {
-                    document.getElementById('password-container').classList.remove('hidden');
-                    alert("משתמש זוהה! נא להזין סיסמה");
+                if (document.getElementById('pass-div').classList.contains('hidden')) {
+                    document.getElementById('pass-div').classList.remove('hidden');
+                    alert("משתמש זוהה! הכנס סיסמה.");
                     return;
                 }
 
-                if (p === data.password) {
-                    currentUsername = u;
-                    openMailbox();
+                if (pass === data.password) {
+                    myUser = name;
+                    openInbox();
                 } else {
-                    alert("סיסמה שגויה למשתמש זה");
+                    alert("סיסמה שגויה");
                 }
             });
         }
     }
 
-    function openMailbox() {
-        document.getElementById('auth-box').classList.add('hidden');
-        document.getElementById('mailbox-box').classList.remove('hidden');
-        document.getElementById('user-tag').innerText = currentUsername + "@bino";
+    function openInbox() {
+        document.getElementById('auth-ui').classList.add('hidden');
+        document.getElementById('mail-ui').classList.remove('hidden');
+        document.getElementById('welcome-tag').innerText = "שלום " + myUser + "@bino";
         
-        database.ref('messages').on('value', function(snap) {
-            var allMsgs = snap.val();
+        database.ref('messages').on('value', function(s) {
+            var msgs = s.val();
             var html = "";
-            for (var key in allMsgs) {
-                if (allMsgs[key] && allMsgs[key].to === currentUsername) {
-                    html += "<div class='msg-item'><b>מאת: " + allMsgs[key].from + "@bino</b><br>" + allMsgs[key].text + "</div>";
+            for (var id in msgs) {
+                if (msgs[id] && msgs[id].to === myUser) {
+                    html += "<div class='msg-box'><b>מאת " + msgs[id].from + "@bino:</b><br>" + msgs[id].text + "</div>";
                 }
             }
-            document.getElementById('inbox').innerHTML = html || "תיבת הדואר ריקה";
+            document.getElementById('inbox').innerHTML = html || "אין הודעות חדשות";
         });
     }
 
-    function deliverMail() {
-        var target = document.getElementById('send-to').value.trim().toLowerCase();
-        var content = document.getElementById('send-msg').value;
+    function sendBinoMail() {
+        var to = document.getElementById('to-user').value.trim().toLowerCase().replace('@bino', '');
+        var txt = document.getElementById('msg-content').value;
+        if (!to || !txt) return alert("מלא נמען והודעה");
 
-        if (!target || !content) return alert("נא למלא נמען ותוכן הודעה");
-
-        database.ref('messages').push({
-            from: currentUsername,
-            to: target.replace('@bino', ''),
-            text: content,
-            timestamp: Date.now()
-        }).then(function() {
-            alert("הודעה נשלחה בהצלחה אל " + target + "@bino");
-            document.getElementById('send-msg').value = "";
-        }).catch(function(e) {
-            alert("שגיאה בשליחה: " + e.message);
-        });
+        database.ref('messages').push({ from: myUser, to: to, text: txt })
+            .then(function() { 
+                alert("הודעה נשלחה בהצלחה!"); 
+                document.getElementById('msg-content').value = ""; 
+            });
     }
 </script>
 </body>
